@@ -143,7 +143,7 @@ class HeaderEncoder
   end
 
   # gives the string "?=",which is used to mark the end of a quoted-printable
-  # characte rsequence
+  # character sequence
   def marker_end_quoted
     "?="
   end
@@ -156,7 +156,7 @@ class HeaderEncoder
 
   # test to see of the given string contains non-ASCII characters
   def requires_rfc2047?(word)
-    (word =~ /[\177-\377]/) != nil
+    (word =~ /[^[:print:]]/) != nil
   end
 end
 
@@ -241,9 +241,11 @@ end
 # "%XX" syntax (where XX are hex digits).
 # actually, allows '/' to appear
 def urlEncode(text)
-  text.sub(/[^a-zA-Z0-9\-,.*_\/]/) do
-    "%#{sprintf('%2X', $&[0])}"
-  end
+  require 'cgi'
+  text = CGI.escape(text)
+  #text.sub(/[^a-zA-Z0-9\-,.*_\/]/) do
+  #  "%#{sprintf('%2X', $&[0])}"
+  #end
 end
 
 
@@ -302,10 +304,12 @@ class Repository
   end
 
   # calculate the path prefix shared by all files commited to this
-  # reposotory
+  # repository
   def merge_common_prefix(path)
     if @common_prefix == nil
       @common_prefix = path.dup
+    elsif path == '/'
+      @common_prefix = '/'
     else
       path = path.dup
       until @common_prefix == path
@@ -971,9 +975,10 @@ class UnifiedDiffColouriser < LineConsumer
         when "+" then "added"
         when "-" then "removed"
       end
+      
       unless nextState == nil
         if @currentStyle=='info'
-          print("<pre class=\"diff\"><small id=\"info\">")
+          print("<pre class=\"diff\"><small id=\"info\" style=\"color:#888888;\">")
         else
           print("<pre class=\"diff\" id=\"#{@currentStyle}\">")
         end
@@ -1213,10 +1218,11 @@ $from_address = nil
 $subjectPrefix = nil
 $files_in_subject = false;
 $smtp_host = nil
-$repository_name = nil
+$user_repository_name = nil
 # 2MiB limit on attached diffs,
 $mail_size_limit = 1024 * 1024 * 2
 $arg_charset = nil
+$repository_name = nil
 
 require 'getoptlong'
 
@@ -1225,6 +1231,7 @@ opts = GetoptLong.new(
   [ "--config", "-c", GetoptLong::REQUIRED_ARGUMENT ],
   [ "--debug",  "-d", GetoptLong::NO_ARGUMENT ],
   [ "--from",   "-u", GetoptLong::REQUIRED_ARGUMENT ],
+  [ "--repository","-r", GetoptLong::REQUIRED_ARGUMENT ],
   [ "--charset",      GetoptLong::REQUIRED_ARGUMENT ]
 )
 
@@ -1233,6 +1240,7 @@ opts.each do |opt, arg|
   $config = arg if opt=="--config"
   $debug = true if opt=="--debug"
   $from_address = EmailAddress.new(arg) if opt=="--from"
+  $user_repository_name = arg if opt=="--repository"
   # must use different variable as the config is readed later.
   $arg_charset = arg if opt == "--charset"
 end
@@ -1352,7 +1360,11 @@ File.open("#{$logfile}.emailtmp", File::RDWR|File::CREAT|File::TRUNC) do |mail|
 end
 
 if $subjectPrefix == nil
-  $subjectPrefix = "[SVN #{Repository.array.join(',')}]"
+  if $user_repository_name == nil
+    $subjectPrefix = "[SVN #{Repository.array.join(',')}]"
+  else
+    $subjectPrefix = "[SVN " + $user_repository_name + "]"
+  end
 end
 
 if $files_in_subject

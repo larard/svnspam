@@ -1,0 +1,3 @@
+repository="[PATH_TO_SVN_REPOSITORY]"
+curr_revision="[MOST_RECENT_KNOWN_VERSION]"
+
