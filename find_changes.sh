@@ -9,7 +9,7 @@
 #######
 
 base_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
-echo "Sending email to " ${send_to:="${USER}@rtlogic.com"}
+echo "Sending email to " ${send_to:="${USER}@example.com"}
 
 for svn_file in `ls $base_dir/repositories/*`
 do
