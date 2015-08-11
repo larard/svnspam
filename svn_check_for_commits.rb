@@ -154,7 +154,7 @@ def read_modified_diff(out, lines, path)
     prev_rev = match1.captures[0].to_i
     lines.next_line
     diff2 = lines.current
-    match2 = diff2.match(/^+++.*\(revision (\d+)\)$/) 
+    match2 = diff2.match(/^\+\+\+.*\(revision (\d+)\)$/) 
     next_rev = match2.captures[0].to_i
     diff2 = lines.current
     out.puts "#V #{prev_rev},#{next_rev}"
